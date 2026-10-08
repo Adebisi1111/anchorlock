@@ -131,32 +131,22 @@ class AnchorLock(gl.Contract):
 
     @gl.public.write
     def attest_url(self, url: str) -> str:
-        """Attest a URL's content. Returns the attestation ID.
-
-        Validators independently fetch the page and derive its content
-        fingerprint. The attestation commits only if a majority produce the
-        identical fingerprint digest. Divergent extraction fails the round.
-        """
+        """Attest a URL. Leader and validators each fetch independently and
+        must derive an identical fingerprint (gl.eq_principle.strict_eq)."""
         if not url or not url.strip():
             raise gl.vm.UserError("URL cannot be empty")
         if not url.startswith(("http://", "https://")):
             raise gl.vm.UserError("URL must start with http:// or https://")
 
-        def leader_fn() -> dict:
-            return _fetch_and_fingerprint(url)
+        def leader_fn() -> str:
+            return json.dumps(_fetch_and_fingerprint(url))
 
-        def validator_fn(leader_res) -> bool:
-            if not isinstance(leader_res, gl.vm.Return):
-                return False
-            mine = _fetch_and_fingerprint(url)
-            return mine.get("digest") == leader_res.calldata.get("digest")
+        result_json = gl.eq_principle.strict_eq(leader_fn)
+        fp = json.loads(result_json)
 
-        result = gl.vm.run_nondet(leader_fn, validator_fn)
-
-        result_data = result.calldata if hasattr(result, "calldata") else result
-        digest = result_data.get("digest", "")
-        excerpt = result_data.get("excerpt", "")
-        word_count = result_data.get("word_count", 0)
+        digest = fp.get("digest", "")
+        excerpt = fp.get("excerpt", "")
+        word_count = fp.get("word_count", 0)
 
         if not digest:
             raise gl.vm.UserError("Consensus produced no content fingerprint")
@@ -181,11 +171,8 @@ class AnchorLock(gl.Contract):
 
     @gl.public.write
     def verify_attestation(self, attest_id: str) -> str:
-        """Re-fetch a URL and compare against the stored fingerprint.
-
-        Returns MATCH (content unchanged since attestation), DRIFT (content
-        changed), or INCONCLUSIVE (extraction could not reach consensus).
-        """
+        """Re-fetch a URL and compare to the stored fingerprint.
+        Returns MATCH, DRIFT, or INCONCLUSIVE; persists last_verify_result."""
         attest_id = str(attest_id)
         attest = self.attestations.get(attest_id, None)
         if attest is None:
@@ -194,18 +181,12 @@ class AnchorLock(gl.Contract):
         stored_digest = attest.fingerprint
         target_url = attest.url
 
-        def leader_fn() -> dict:
-            return _fetch_and_fingerprint(target_url)
+        def leader_fn() -> str:
+            return json.dumps(_fetch_and_fingerprint(target_url))
 
-        def validator_fn(leader_res) -> bool:
-            if not isinstance(leader_res, gl.vm.Return):
-                return False
-            mine = _fetch_and_fingerprint(target_url)
-            return mine.get("digest") == leader_res.calldata.get("digest")
-
-        result = gl.vm.run_nondet(leader_fn, validator_fn)
-        result_data = result.calldata if hasattr(result, "calldata") else result
-        current_digest = result_data.get("digest", "")
+        result_json = gl.eq_principle.strict_eq(leader_fn)
+        fp = json.loads(result_json)
+        current_digest = fp.get("digest", "")
 
         attest.verify_count += u256(1)
 
