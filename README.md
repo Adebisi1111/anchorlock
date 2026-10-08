@@ -9,8 +9,8 @@ Dispute evidence, proof-of-publication, content oracles, and audit trails all ne
 ## Deployed
 
 - **Network:** GenLayer Bradbury Testnet (chain 4221)
-- **Contract:** `0x5BfC59Fa5F42859D4DF12da02B64A333613aBd1a`
-- **Explorer:** https://explorer-bradbury.genlayer.com/address/0x5BfC59Fa5F42859D4DF12da02B64A333613aBd1a
+- **Contract:** `0xbc982C168f8Bb3C1963BC833C9E18F3e5519C992`
+- **Explorer:** https://explorer-bradbury.genlayer.com/address/0xbc982C168f8Bb3C1963BC833C9E18F3e5519C992
 
 ## How consensus works
 

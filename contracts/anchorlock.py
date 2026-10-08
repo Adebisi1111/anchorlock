@@ -45,6 +45,7 @@ class Attestation:
     attester: str
     created_at: u256
     verify_count: u256
+    last_verify_result: str
 
 
 # ---------------------------------------------------------------------------
@@ -174,6 +175,7 @@ class AnchorLock(gl.Contract):
             attester=str(gl.message.sender_address),
             created_at=u256(self._now()),
             verify_count=u256(0),
+            last_verify_result="",
         )
         return attest_id
 
@@ -206,13 +208,17 @@ class AnchorLock(gl.Contract):
         current_digest = result_data.get("digest", "")
 
         attest.verify_count += u256(1)
-        self.attestations[attest_id] = attest
 
         if not current_digest:
-            return "INCONCLUSIVE"
-        if current_digest == stored_digest:
-            return "MATCH"
-        return "DRIFT"
+            verdict = "INCONCLUSIVE"
+        elif current_digest == stored_digest:
+            verdict = "MATCH"
+        else:
+            verdict = "DRIFT"
+
+        attest.last_verify_result = verdict
+        self.attestations[attest_id] = attest
+        return verdict
 
     @gl.public.view
     def get_attestation(self, attest_id: str) -> dict:
@@ -231,6 +237,7 @@ class AnchorLock(gl.Contract):
             "attester": a.attester,
             "created_at": a.created_at,
             "verify_count": a.verify_count,
+            "last_verify_result": a.last_verify_result,
         }
 
     @gl.public.view
