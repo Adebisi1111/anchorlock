@@ -9,19 +9,27 @@ Dispute evidence, proof-of-publication, content oracles, and audit trails all ne
 ## Deployed
 
 - **Network:** GenLayer Bradbury Testnet (chain 4221)
-- **Contract:** `0xbc982C168f8Bb3C1963BC833C9E18F3e5519C992`
-- **Explorer:** https://explorer-bradbury.genlayer.com/address/0xbc982C168f8Bb3C1963BC833C9E18F3e5519C992
+- **Contract:** `0xfa37e421d51E116D8DCd8AA68057600204fB4244`
+- **Explorer:** https://explorer-bradbury.genlayer.com/address/0xfa37e421d51E116D8DCd8AA68057600204fB4244
 
 ## How consensus works
 
-`attest_url` runs `gl.vm.run_nondet` with a leader/validator pattern:
+`attest_url` runs `gl.eq_principle.strict_eq` — the canonical GenLayer equivalence primitive:
 
 1. The leader fetches the URL, strips HTML to visible text, and derives a fingerprint: a SHA-256 digest over the normalized (lowercased, single-spaced) text, plus a word count and opening excerpt.
-2. Each validator **independently** fetches the same URL and derives its own fingerprint.
-3. Validators agree only if their fingerprint digest matches the leader's.
-4. Divergent extraction fails the round — no single node can forge an attestation.
+2. Every validator independently fetches the same URL and derives its own fingerprint.
+3. `strict_eq` commits only when a majority produce a byte-identical fingerprint. Divergent extraction fails the round — no single node can forge an attestation.
 
-The fingerprint is normalized so trivial case/whitespace variance between independent fetches does not defeat genuine agreement, while any real content change still alters the digest. This keeps the consensus comparison cheap and robust, so the round fits a block window even for large pages.
+Normalization makes the digest robust to trivial case/whitespace variance between independent fetches, so genuine agreement is not defeated by encoding noise while any real content change still alters the digest.
+
+## Reference URLs GenVM can reach
+
+GenVM's web egress is blocked by bot protection on many major sites. Use GenLayer's own test server or plain static pages:
+
+- `https://test-server.genlayer.com/static/genvm/hello.html` (GenLayer's own)
+- `https://example.com` (used throughout GenLayer's docs)
+
+Wikipedia, GitHub raw, and most CDN sites are blocked and will fail independently of the contract.
 
 ## API
 
