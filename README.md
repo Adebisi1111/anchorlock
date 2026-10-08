@@ -4,7 +4,7 @@ A GenLayer Intelligent Contract primitive for proving **what a URL said at a poi
 
 ## Why it exists
 
-Dispute evidence, proof-of-publication, content oracles, and audit trails all need the same primitive: an on-chain, consensus-verified record of what a URL contained. AnchorLock provides that record without trusting any single node.
+Dispute evidence, proof-of-publication, content oracles, and audit trails all need the same primitive: an on-chain, consensus-verified record of what a URL contained. AnchorLock provides that record without trusting any single node. It is designed as a building block other contracts and apps can call, not as a standalone product.
 
 ## Deployed
 
@@ -20,7 +20,7 @@ Dispute evidence, proof-of-publication, content oracles, and audit trails all ne
 2. Every validator independently fetches the same URL and derives its own fingerprint.
 3. `strict_eq` commits only when a majority produce a byte-identical fingerprint. Divergent extraction fails the round — no single node can forge an attestation.
 
-Normalization makes the digest robust to trivial case/whitespace variance between independent fetches, so genuine agreement is not defeated by encoding noise while any real content change still alters the digest.
+Normalization makes the digest robust to trivial case/whitespace variance between independent fetches, so genuine agreement is not defeated by encoding noise while any real content change still alters the digest. This is the property that makes the consensus round reliable: the fingerprint is a deterministic function of the visible text, so identical content agrees and any real change diverges.
 
 ## Reference URLs GenVM can reach
 
@@ -95,7 +95,7 @@ genlayer write <CONTRACT> verify_attestation --args "0"
 
 - **Contract:** Python GenLayer Intelligent Contract (GenVM runner `1jb45aa8...`)
 - **Storage:** `TreeMap[str, Attestation]`, `u256` counter
-- **Consensus:** `gl.vm.run_nondet` leader/validator, digest comparison
+- **Consensus:** `gl.eq_principle.strict_eq` — independent per-validator fetch, byte-identical fingerprint required
 - **Web:** `gl.nondet.web.request` for independent per-validator fetches
 - **Network:** GenLayer Bradbury Testnet (chain 4221)
 
