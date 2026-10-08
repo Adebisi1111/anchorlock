@@ -43,8 +43,38 @@ Wikipedia, GitHub raw, and most CDN sites are blocked and will fail independentl
 
 ## Verified on-chain
 
-- `attest_url("https://example.com")` → MAJORITY_AGREE; attestation committed with fingerprint `0x2f71cf3a...`, word count 25, real extracted excerpt.
-- `verify_attestation("0")` → MAJORITY_AGREE; verify_count incremented, content matched (no drift).
+- `attest_url("https://example.com")` → MAJORITY_AGREE; excerpt `this domain is for use in...`, word count 25
+- `attest_url("https://test-server.genlayer.com/static/genvm/hello.html")` → MAJORITY_AGREE; excerpt `hello world!`, word count 2
+- `verify_attestation("0")` → `last_verify_result: "MATCH"` stored on-chain, verify_count 1
+
+Both attestations are consensus-committed and readable on the explorer.
+
+## Tests
+
+16 direct-mode tests via `gltest`:
+
+```bash
+gltest tests/ -v
+```
+
+Coverage: HTML stripping and entity decoding, fingerprint determinism,
+case/whitespace-insensitive agreement, content-change divergence, drift
+detection (MATCH / DRIFT), input validation, ID incrementing, unknown-record
+handling, attester recording.
+
+The tests were bite-checked — each guard was verified to fail when its
+defect is reintroduced:
+
+| Defect injected | Tests that fail |
+|---|---|
+| HTML stripping removed | 11 |
+| Fingerprint normalization removed | 2 |
+| Drift detection broken (always MATCH) | 1 |
+
+Note: `gl.eq_principle.strict_eq`'s internal leader/validator round is proven
+live on Bradbury (MAJORITY_AGREE above); direct mode cannot simulate that
+primitive's round, so the tests pin the invariant it depends on — the
+fingerprint is a deterministic function of visible text.
 
 ## How to run
 

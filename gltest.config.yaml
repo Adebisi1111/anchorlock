@@ -1,0 +1,15 @@
+networks:
+  localnet:
+    rpc: http://127.0.0.1:4000/api
+    chain_id: null
+    explorer: http://localhost:4000
+    default: true
+  testnet_bradbury:
+    rpc: https://rpc-bradbury.genlayer.com
+    chain_id: 4221
+    explorer: https://explorer-bradbury.genlayer.com
+
+contracts:
+  anchorlock:
+    path: contracts/anchorlock.py
+    args: []
